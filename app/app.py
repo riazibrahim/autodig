@@ -38,14 +38,16 @@ for domain in unique_domains_list:
                 'Processing domain number {} : {}\n'
                 '************************************************************\n'.format(i, domain))
     ns_result = pydig.query('{}'.format(domain), 'A')
-    cname_result = pydig.query('{}'.format(domain), 'CNAME')
     logger.info('Address record:{}'.format(ns_result))
+    cname_result = pydig.query('{}'.format(domain), 'CNAME')
     logger.info('CNAME record:{}'.format(cname_result))
-    ns_results_df = ns_results_df.append({
-                        'domain': domain,
-                        'A': ns_result,
-                        'CNAME': cname_result},
-                        ignore_index=True)
+    for a_record in ns_result:
+        for cname in cname_result:
+            ns_results_df = ns_results_df.append({
+                                'domain': domain,
+                                'A': a_record,
+                                'CNAME': cname},
+                                ignore_index=True)
     i += 1
 logger.info('Exporting to excel...')
 export_to_excel(dataframe=ns_results_df, outfile='{} - {}'.format(filename_prepend,output_file), sheet_name='NS results')
