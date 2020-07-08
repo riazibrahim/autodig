@@ -12,10 +12,10 @@ if output_file is None:  # Create file naming if output file name not given
 
 input_list = []
 ns_results_df = pd.DataFrame(
-        columns=[
-            'domain',
-            'A',
-            'CNAME'])
+    columns=[
+        'domain',
+        'A',
+        'CNAME'])
 
 if input_file is not None:
     logger.debug('Input file detected')
@@ -41,13 +41,37 @@ for domain in unique_domains_list:
     logger.info('Address record:{}'.format(ns_result))
     cname_result = pydig.query('{}'.format(domain), 'CNAME')
     logger.info('CNAME record:{}'.format(cname_result))
-    for a_record in ns_result:
+    if len(ns_result) + len(cname_result) == 0:  # both ns_result and cname_result is empty
+        logger.info('both A and CNAME are empty')
+        ns_results_df = ns_results_df.append({
+            'domain': domain,
+            'A': 'none',
+            'CNAME': 'none'},
+            ignore_index=True)
+        continue
+    if len(ns_result) != 0:  # ns result not empty
+        for a_record in ns_result:
+            if len(cname_result) != 0:  # ns result not empty and cname result not empty
+                for cname in cname_result:
+                    ns_results_df = ns_results_df.append({
+                        'domain': domain,
+                        'A': a_record,
+                        'CNAME': cname},
+                        ignore_index=True)
+            else:  # ns result not empty and cname result is empty
+                ns_results_df = ns_results_df.append({
+                    'domain': domain,
+                    'A': a_record,
+                    'CNAME': 'none'},
+                    ignore_index=True)
+    else:  # ns result is empty
         for cname in cname_result:
             ns_results_df = ns_results_df.append({
-                                'domain': domain,
-                                'A': a_record,
-                                'CNAME': cname},
-                                ignore_index=True)
+                'domain': domain,
+                'A': 'none',
+                'CNAME': cname},
+                ignore_index=True)
     i += 1
 logger.info('Exporting to excel...')
-export_to_excel(dataframe=ns_results_df, outfile='{} - {}'.format(filename_prepend,output_file), sheet_name='NS results')
+export_to_excel(dataframe=ns_results_df, outfile='{} - {}'.format(filename_prepend, output_file),
+                sheet_name='NS results')
