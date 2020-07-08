@@ -135,6 +135,7 @@ dmypy.json
 
 ## Custom
 *.xlsx
+*.xlsx#
 *.xls
 logs/
 *.db
